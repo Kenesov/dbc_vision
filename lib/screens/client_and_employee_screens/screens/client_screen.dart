@@ -64,16 +64,6 @@ class _ClientsScreenState extends State<ClientsScreen> {
                     child: Row(
                       children: [
                         Expanded(
-                          flex: 1,
-                          child: Text(
-                            client.id,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
-                            ),
-                          ),
-                        ),
-                        Expanded(
                           flex: 3,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -143,12 +133,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
                             ),
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.red),
-                          onPressed: () {
-                            // Delete functionality would go here
-                          },
-                        ),
+
                       ],
                     ),
                   ),

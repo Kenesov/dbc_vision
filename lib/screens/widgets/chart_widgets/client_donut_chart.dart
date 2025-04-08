@@ -2,39 +2,83 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class ClientDonutChart extends StatefulWidget {
-  const ClientDonutChart({Key? key}) : super(key: key);
+  final bool isLoading;
+
+  const ClientDonutChart({
+    Key? key,
+    this.isLoading = false,
+  }) : super(key: key);
 
   @override
   _ClientDonutChartState createState() => _ClientDonutChartState();
 }
 
-class _ClientDonutChartState extends State<ClientDonutChart> {
+class _ClientDonutChartState extends State<ClientDonutChart> with SingleTickerProviderStateMixin {
   int touchedIndex = -1;
+  late AnimationController _animationController;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+    _animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOutCubic,
+    );
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Chart centered with a defined height
+        // Legend on the left
         Expanded(
           flex: 2,
-          child:  Column(
+          child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _Indicator(color: Colors.blue, text: 'Новые клиенты: 3171'),
-              const SizedBox(height: 4),
-              const _Indicator(color: Colors.teal, text: 'Постоянные клиенты: 632'),
+              const _Indicator(
+                color: Color(0xFF2196F3),
+                text: 'Новые клиенты',
+                value: '3171 (83.4%)',
+              ),
+              const SizedBox(height: 12),
+              const _Indicator(
+                color: Color(0xFF009688),
+                text: 'Постоянные клиенты',
+                value: '632 (16.6%)',
+              ),
             ],
           ),
-    ),
-
-          Expanded(
+        ),
+        // Chart centered on the right
+        Expanded(
           flex: 3,
-          child: _ClientChart(),
-          )
-        // Legend below the chart
+          child: AnimatedBuilder(
+            animation: _animation,
+            builder: (context, child) {
+              return Opacity(
+                opacity: _animation.value,
+                child: _ClientChart(
+                  animationValue: _animation.value,
+                ),
+              );
+            },
+          ),
+        ),
       ],
     );
   }
@@ -44,30 +88,57 @@ class _ClientDonutChartState extends State<ClientDonutChart> {
 class _Indicator extends StatelessWidget {
   final Color color;
   final String text;
+  final String value;
 
-  const _Indicator({required this.color, required this.text});
+  const _Indicator({
+    required this.color,
+    required this.text,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         Container(
-          width: 10,
-          height: 10,
+          width: 12,
+          height: 12,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: color,
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.3),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: 6),
-        Flexible(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.black87,
-            ),
-            overflow: TextOverflow.ellipsis,
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF555555),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: color.withOpacity(0.8),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -77,7 +148,11 @@ class _Indicator extends StatelessWidget {
 
 // Separate widget for the chart to isolate state
 class _ClientChart extends StatefulWidget {
-  const _ClientChart();
+  final double animationValue;
+
+  const _ClientChart({
+    required this.animationValue,
+  });
 
   @override
   __ClientChartState createState() => __ClientChartState();
@@ -88,29 +163,60 @@ class __ClientChartState extends State<_ClientChart> {
 
   @override
   Widget build(BuildContext context) {
-    return PieChart(
-      PieChartData(
-        pieTouchData: PieTouchData(
-          touchCallback: (FlTouchEvent event, pieTouchResponse) {
-            setState(() {
-              if (!event.isInterestedForInteractions ||
-                  pieTouchResponse == null ||
-                  pieTouchResponse.touchedSection == null) {
-                touchedIndex = -1;
-                return;
-              }
-              touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
-            });
-          },
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        AspectRatio(
+          aspectRatio: 1.3,
+          child: PieChart(
+            PieChartData(
+              pieTouchData: PieTouchData(
+                touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                  setState(() {
+                    if (!event.isInterestedForInteractions ||
+                        pieTouchResponse == null ||
+                        pieTouchResponse.touchedSection == null) {
+                      touchedIndex = -1;
+                      return;
+                    }
+                    touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                  });
+                },
+              ),
+              borderData: FlBorderData(show: false),
+              sectionsSpace: 2,
+              centerSpaceRadius: 40,
+              sections: showingSections(),
+              startDegreeOffset: 180,
+            ),
+            swapAnimationDuration: const Duration(milliseconds: 800),
+            swapAnimationCurve: Curves.easeInOutQuart,
+          ),
         ),
-        borderData: FlBorderData(show: false),
-        sectionsSpace: 0,
-        centerSpaceRadius: 30, // Increased from 20 to 30 for better centering
-        sections: showingSections(),
-        startDegreeOffset: 0,
-      ),
-      swapAnimationDuration: const Duration(milliseconds: 0),
-      swapAnimationCurve: Curves.linear,
+        // Center text
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Всего',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              '3803',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF333333),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -123,32 +229,49 @@ class __ClientChartState extends State<_ClientChart> {
 
     return List.generate(2, (i) {
       final isTouched = i == touchedIndex;
-      final fontSize = isTouched ? 14.0 : 12.0;
-      final radius = isTouched ? 50.0 : 40.0;
+      final fontSize = isTouched ? 16.0 : 14.0;
+      final radius = isTouched ? 60.0 : 50.0;
+
+      // Apply animation value to radius
+      final animatedRadius = radius * widget.animationValue;
 
       switch (i) {
         case 0:
           return PieChartSectionData(
-            color: Colors.blue,
+            color: const Color(0xFF2196F3),
             value: newClients,
             title: '${newClientsPercentage.toStringAsFixed(1)}%',
-            radius: radius,
+            radius: animatedRadius,
             titleStyle: TextStyle(
               fontSize: fontSize,
               fontWeight: FontWeight.bold,
               color: Colors.white,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                ),
+              ],
             ),
           );
         case 1:
           return PieChartSectionData(
-            color: Colors.teal,
+            color: const Color(0xFF009688),
             value: regularClients,
             title: '${regularClientsPercentage.toStringAsFixed(1)}%',
-            radius: radius,
+            radius: animatedRadius,
             titleStyle: TextStyle(
               fontSize: fontSize,
               fontWeight: FontWeight.bold,
               color: Colors.white,
+              shadows: [
+                Shadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                ),
+              ],
             ),
           );
         default:
@@ -157,3 +280,4 @@ class __ClientChartState extends State<_ClientChart> {
     });
   }
 }
+
