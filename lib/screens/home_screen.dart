@@ -1,5 +1,6 @@
 import 'package:dbc_vision/screens/client_and_employee_screens/clients_and_employee_screen.dart';
 import 'package:dbc_vision/screens/konversiya/conversiya_screen.dart';
+import 'package:dbc_vision/screens/my_settings/my_settings_screen.dart';
 import 'package:dbc_vision/screens/widgets/app_bar.dart';
 import 'package:dbc_vision/screens/widgets/cards_widgets/summary2_card.dart';
 import 'package:dbc_vision/screens/widgets/chart_widgets/age_pie_chart.dart';
@@ -278,28 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 2: // Konversiya (StatisticsScreen)
         return const ConversiyaScreen();
       case 3: // Mening Sozlamalarim
-        return Scaffold(
-          appBar: const ModernAppBar( // ModernAppBar bilan almashtirdik
-            title: 'Mening Sozlamalarim',
-            backgroundColor: Color(0xFF4304cb),
-            titleColor: Colors.white,
-            actions: [
-              Padding(
-                padding: EdgeInsets.only(right: 8.0),
-                child: Icon(
-                  Icons.settings,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          body: const Center(
-            child: Text(
-              'Mening Sozlamalarim',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-          ),
-        );
+        return const MySettingsScreen();
       default:
         return const SizedBox.shrink();
     }

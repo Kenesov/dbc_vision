@@ -1,360 +1,327 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../models/employee.dart';
 import '../widgets/employee_detail_dialog.dart';
-import '../widgets/add_employee_dialog.dart';
-import '../widgets/edit_employee_dialog.dart';
 
 class EmployeesScreen extends StatefulWidget {
-  const EmployeesScreen({super.key});
+  final DateTimeRange? dateRange;
+
+  const EmployeesScreen({super.key, this.dateRange});
 
   @override
   State<EmployeesScreen> createState() => _EmployeesScreenState();
 }
 
-class _EmployeesScreenState extends State<EmployeesScreen> {
+class _EmployeesScreenState extends State<EmployeesScreen> with SingleTickerProviderStateMixin {
   late List<Employee> employees;
+  late List<Employee> filteredEmployees;
+  final dateFormat = DateFormat('dd.MM.yyyy');
   bool _isLoading = true;
-  String? _selectedEmployee;
+  late AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
     // Имитация загрузки данных
-    Future.delayed(const Duration(seconds: 1), () {
+    Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) {
         setState(() {
           employees = getMockEmployees();
+          _filterEmployees();
           _isLoading = false;
         });
+        _animationController.forward();
       }
     });
   }
 
-  void _showAddEmployeeDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => const AddEmployeeDialog(),
-    ).then((value) {
-      if (value != null && value is Employee) {
-        setState(() {
-          employees.add(value);
-        });
-      }
-    });
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
   }
 
-  void _showEditEmployeeDialog(Employee employee) {
-    showDialog(
-      context: context,
-      builder: (context) => EditEmployeeDialog(employee: employee),
-    ).then((value) {
-      if (value != null && value is Employee) {
-        setState(() {
-          final index = employees.indexWhere((e) => e.id == value.id);
-          if (index != -1) {
-            employees[index] = value;
-          }
-        });
-      }
-    });
+  @override
+  void didUpdateWidget(EmployeesScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.dateRange != oldWidget.dateRange && !_isLoading) {
+      _filterEmployees();
+    }
   }
 
-  void _showEmployeeDetailDialog(Employee employee) {
-    showDialog(
-      context: context,
-      builder: (context) => EmployeeDetailDialog(employee: employee),
-    );
-  }
-
-  void _deleteEmployee(String id) {
-    setState(() {
-      employees.removeWhere((employee) => employee.id == id);
-    });
-  }
-
-  void _showOptionsMenu(BuildContext context, Employee employee) {
-    setState(() {
-      _selectedEmployee = employee.id;
-    });
-
-    final RenderBox button = context.findRenderObject() as RenderBox;
-    final RenderBox overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
-    final RelativeRect position = RelativeRect.fromRect(
-      Rect.fromPoints(
-        button.localToGlobal(Offset.zero, ancestor: overlay),
-        button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
-      ),
-      Offset.zero & overlay.size,
-    );
-
-    showMenu(
-      context: context,
-      position: position,
-      items: [
-        PopupMenuItem(
-          value: 'delete',
-          child: Row(
-            children: [
-              Icon(Icons.delete, color: Colors.red.shade700, size: 20),
-              const SizedBox(width: 8),
-              Text('Удалить', style: TextStyle(color: Colors.red.shade700)),
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: 'edit',
-          child: Row(
-            children: [
-              const Icon(Icons.edit, color: Colors.orange, size: 20),
-              const SizedBox(width: 8),
-              const Text('Изменить', style: TextStyle(color: Colors.orange)),
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: 'attendance',
-          child: Row(
-            children: [
-              const Icon(Icons.calendar_today, color: Colors.blue, size: 20),
-              const SizedBox(width: 8),
-              const Text('Показать посещаемость', style: TextStyle(color: Colors.blue)),
-            ],
-          ),
-        ),
-      ],
-    ).then((value) {
-      setState(() {
-        _selectedEmployee = null;
-      });
-
-      if (value == 'delete') {
-        _deleteEmployee(employee.id);
-      } else if (value == 'edit') {
-        _showEditEmployeeDialog(employee);
-      } else if (value == 'attendance') {
-       // Navigator.push(
-       //     context,
-       //     MaterialPageRoute(builder: (context) => AttendanceScreen(employee: employee))
-       // );
-      }
-    });
+  void _filterEmployees() {
+    // In a real app, you would filter employees based on their attendance dates
+    // For this mock, we'll just use the full list
+    filteredEmployees = List.from(employees);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
+      backgroundColor: const Color(0xFFF8F9FA),
+      body: _isLoading
+          ? const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6A3DE8)),
+        ),
+      )
+          : Column(
         children: [
-          _buildHeader(),
-          Expanded(
-            child: _isLoading ? _buildLoadingState() : _buildEmployeeList(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 1,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Flexible( // Birinchi Text ni Flexible bilan o'radik
-                  child: const Text(
-                    'Сотрудники',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: Color(0xFF4304cb),
-                    ),
-                    overflow: TextOverflow.ellipsis, // Matn uzun bo'lsa qisqartiriladi
-                  ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
                 ),
-                Flexible( // Ikkinchi Text ni Flexible bilan o'radik
-                  child: const Text(
-                    ' / Посещаемость',
-                    style: TextStyle(
-                      fontWeight: FontWeight.normal,
-                      fontSize: 18,
-                      color: Colors.grey,
-                    ),
-                    overflow: TextOverflow.ellipsis, // Matn uzun bo'lsa qisqartiriladi
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0EAFA),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.badge,
+                        size: 16,
+                        color: Color(0xFF6A3DE8),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Сотрудники: ${filteredEmployees.length}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Color(0xFF6A3DE8),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          Flexible(
-            child: ElevatedButton(
-              onPressed: _showAddEmployeeDialog,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4304cb),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          Expanded(
+            child: filteredEmployees.isEmpty
+                ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.search_off,
+                    size: 64,
+                    color: Colors.grey.shade400,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Нет сотрудников в выбранном диапазоне дат',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
               ),
-              child: const Text('Добавить сотрудника'),
+            )
+                : AnimatedBuilder(
+              animation: _animationController,
+              builder: (context, child) {
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filteredEmployees.length,
+                  itemBuilder: (context, index) {
+                    final employee = filteredEmployees[index];
+
+                    // Staggered animation for list items
+                    final itemAnimation = Tween(
+                      begin: 0.0,
+                      end: 1.0,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: _animationController,
+                        curve: Interval(
+                          index / filteredEmployees.length * 0.6,
+                          (index + 1) / filteredEmployees.length * 0.6 + 0.4,
+                          curve: Curves.easeOut,
+                        ),
+                      ),
+                    );
+
+                    return FadeTransition(
+                      opacity: itemAnimation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0.2, 0),
+                          end: Offset.zero,
+                        ).animate(itemAnimation),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _buildEmployeeCard(employee),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
       ),
     );
   }
-  Widget _buildLoadingState() {
-    return const Center(
-      child: CircularProgressIndicator(),
-    );
-  }
 
-  Widget _buildEmployeeList() {
-    return Column(
-      children: [
-        Container(
-          color: Colors.grey.shade100,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  Widget _buildEmployeeCard(Employee employee) {
+    // For demo purposes, generate random visit count
+    final visitCount = 1 + (employee.id.hashCode % 10);
+    final lastVisit = DateTime.now().subtract(Duration(hours: int.parse(employee.id) * 5));
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (context) => EmployeeDetailDialog(
+              employee: employee,
+              visitCount: visitCount,
+              lastVisit: lastVisit,
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Expanded(
-                flex: 2,
-                child: Text(
-                  'Фото',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                    color: Colors.blue.shade700,
+              Hero(
+                tag: 'employee-${employee.id}',
+                child: Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Image.network(
+                    employee.photoUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey.shade200,
+                        child: const Icon(Icons.person, size: 40, color: Colors.grey),
+                      );
+                    },
                   ),
                 ),
               ),
+              const SizedBox(width: 16),
               Expanded(
-                flex: 4,
-                child: Text(
-                  'Имя',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                    color: Colors.blue.shade700,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 3,
-                child: Text(
-                  'Позиция',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                    color: Colors.blue.shade700,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 40),
-            ],
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            itemCount: employees.length,
-            itemBuilder: (context, index) {
-              final employee = employees[index];
-              final isSelected = _selectedEmployee == employee.id;
-
-              return Container(
-                decoration: BoxDecoration(
-                  color: index % 2 == 0 ? Colors.grey.shade50 : Colors.white,
-                  border: Border(
-                    bottom: BorderSide(
-                      color: Colors.grey.shade200,
-                      width: 1,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      employee.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Color(0xFF333333),
+                      ),
                     ),
-                  ),
-                ),
-                child: InkWell(
-                  onTap: () => _showEmployeeDetailDialog(employee),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                    child: Row(
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0EAFA),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        employee.position,
+                        style: const TextStyle(
+                          color: Color(0xFF6A3DE8),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
                       children: [
-                        Expanded(
-                          flex: 2,
-                          child: Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: Colors.grey.shade300),
-                            ),
-                            clipBehavior: Clip.antiAlias,
-                            child: Image.network(
-                              employee.photoUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(Icons.person, size: 30);
-                              },
-                            ),
-                          ),
+                        const Icon(
+                          Icons.calendar_today,
+                          size: 12,
+                          color: Color(0xFF9E9E9E),
                         ),
-                        Expanded(
-                          flex: 4,
-                          child: Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: Text(
-                              employee.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 3,
-                          child: Text(
-                            employee.position,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w400,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 40,
-                          child: Builder(
-                            builder: (context) => IconButton(
-                              icon: Icon(
-                                Icons.more_horiz,
-                                color: isSelected ? const Color(0xFF4304cb) : Colors.grey,
-                              ),
-                              onPressed: () => _showOptionsMenu(context, employee),
-                            ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Последний визит: ${dateFormat.format(lastVisit)}',
+                          style: const TextStyle(
+                            color: Color(0xFF9E9E9E),
+                            fontSize: 12,
                           ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ),
-              );
-            },
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0EAFA),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.visibility,
+                      size: 14,
+                      color: Color(0xFF6A3DE8),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '$visitCount',
+                      style: const TextStyle(
+                        color: Color(0xFF6A3DE8),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
-

@@ -23,11 +23,11 @@ class AppBottomNavigation extends StatelessWidget {
           label: 'Klient va Ishilar Info',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.person),
+          icon: Icon(Icons.qr_code),
           label: 'Konversiya',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.qr_code),
+          icon: Icon(Icons.person),
           label: 'Nostroyka',
         ),
       ],
