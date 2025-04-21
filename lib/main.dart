@@ -1,4 +1,4 @@
-import 'package:dbc_vision/screens/splash_screen.dart';
+import 'package:dbc_vision/screens/splash/splash_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {

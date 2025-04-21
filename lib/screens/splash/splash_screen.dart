@@ -2,8 +2,9 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math' as math;
-import 'login_screens/login_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import '../login/login_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);

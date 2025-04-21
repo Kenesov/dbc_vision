@@ -25,7 +25,7 @@ class _ClientsScreenState extends State<ClientsScreen> with SingleTickerProvider
     super.initState();
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 500), // EmployeesScreen bilan bir xil
     );
 
     // Simulate loading data
@@ -109,7 +109,7 @@ class _ClientsScreenState extends State<ClientsScreen> with SingleTickerProvider
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        'Клиенты: ${filteredClients.length}',
+                        'Clients: ${filteredClients.length}', // Kirilldan lotin harflarga o‘zgartirdik
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
@@ -135,7 +135,7 @@ class _ClientsScreenState extends State<ClientsScreen> with SingleTickerProvider
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Нет клиентов в выбранном диапазоне дат',
+                    'No clients in the selected date range', // Kirilldan lotin harflarga o‘zgartirdik
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey.shade600,
@@ -144,50 +144,46 @@ class _ClientsScreenState extends State<ClientsScreen> with SingleTickerProvider
                 ],
               ),
             )
-                : Padding(
-              padding: const EdgeInsets.all(16),
-              child: AnimatedBuilder(
-                animation: _animationController,
-                builder: (context, child) {
-                  return GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.75,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
-                    itemCount: filteredClients.length,
-                    itemBuilder: (context, index) {
-                      final client = filteredClients[index];
-                      // Staggered animation for cards
-                      final itemAnimation = Tween(
-                        begin: 0.0,
-                        end: 1.0,
-                      ).animate(
-                        CurvedAnimation(
-                          parent: _animationController,
-                          curve: Interval(
-                            index / filteredClients.length * 0.5,
-                            (index + 1) / filteredClients.length * 0.5 + 0.5,
-                            curve: Curves.easeOut,
-                          ),
-                        ),
-                      );
+                : AnimatedBuilder(
+              animation: _animationController,
+              builder: (context, child) {
+                return ListView.builder( // GridView o‘rniga ListView
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filteredClients.length,
+                  itemBuilder: (context, index) {
+                    final client = filteredClients[index];
 
-                      return FadeTransition(
-                        opacity: itemAnimation,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0, 0.2),
-                            end: Offset.zero,
-                          ).animate(itemAnimation),
+                    // Staggered animation for list items
+                    final itemAnimation = Tween(
+                      begin: 0.0,
+                      end: 1.0,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: _animationController,
+                        curve: Interval(
+                          index / filteredClients.length * 0.6,
+                          (index + 1) / filteredClients.length * 0.6 + 0.4,
+                          curve: Curves.easeOut,
+                        ),
+                      ),
+                    );
+
+                    return FadeTransition(
+                      opacity: itemAnimation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0.2, 0),
+                          end: Offset.zero,
+                        ).animate(itemAnimation),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
                           child: _buildClientCard(client),
                         ),
-                      );
-                    },
-                  );
-                },
-              ),
+                      ),
+                    );
+                  },
+                );
+              },
             ),
           ),
         ],
@@ -196,104 +192,73 @@ class _ClientsScreenState extends State<ClientsScreen> with SingleTickerProvider
   }
 
   Widget _buildClientCard(Client client) {
-    return GestureDetector(
-      onTap: () {
-        showDialog(
-          context: context,
-          builder: (context) => ClientDetailDialog(client: client),
-        );
-      },
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              flex: 3,
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: Image.network(
-                      client.photoUrl,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey.shade200,
-                          child: const Icon(Icons.person, size: 60, color: Colors.grey),
-                        );
-                      },
-                    ),
-                  ),
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
-                        borderRadius: BorderRadius.circular(12),
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: InkWell(
+        onTap: () {
+          showDialog(
+            context: context,
+            builder: (context) => ClientDetailDialog(client: client),
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Hero(
+                tag: 'client-${client.id}', // client uchun tag o‘zgartirildi
+                child: Container(
+                  width: 70,
+                  height: 70,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
                       ),
-                      child: Text(
-                        '${client.visitCount}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ),
+                    ],
                   ),
-                ],
+                  clipBehavior: Clip.antiAlias,
+                  child: Image.network(
+                    client.photoUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey.shade200,
+                        child: const Icon(Icons.person, size: 40, color: Colors.grey),
+                      );
+                    },
+                  ),
+                ),
               ),
-            ),
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
+              const SizedBox(width: 16),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Последний визит',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF9E9E9E),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      dateFormat.format(client.lastSeen),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Color(0xFF333333),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
                     Row(
                       children: [
                         const Icon(
-                          Icons.access_time,
+                          Icons.calendar_today,
                           size: 12,
                           color: Color(0xFF9E9E9E),
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          timeFormat.format(client.lastSeen),
+                          'Last Visit: ${dateFormat.format(client.lastSeen)}', // Kirilldan lotin harflarga o‘zgartirdik
                           style: const TextStyle(
                             color: Color(0xFF9E9E9E),
                             fontSize: 12,
@@ -304,8 +269,33 @@ class _ClientsScreenState extends State<ClientsScreen> with SingleTickerProvider
                   ],
                 ),
               ),
-            ),
-          ],
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0EAFA),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.visibility,
+                      size: 14,
+                      color: Color(0xFF6A3DE8),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${client.visitCount}',
+                      style: const TextStyle(
+                        color: Color(0xFF6A3DE8),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

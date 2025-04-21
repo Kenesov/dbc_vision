@@ -1,6 +1,5 @@
+import 'package:dbc_vision/screens/client/screens/client_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:dbc_vision/screens/client_and_employee_screens/screens/client_screen.dart';
-import 'package:dbc_vision/screens/client_and_employee_screens/screens/employee_screen.dart';
 import 'package:intl/intl.dart';
 
 class ClientsAndEmployeeScreen extends StatefulWidget {
@@ -11,7 +10,6 @@ class ClientsAndEmployeeScreen extends StatefulWidget {
 }
 
 class _ClientsAndEmployeeScreenState extends State<ClientsAndEmployeeScreen> with TickerProviderStateMixin {
-  late TabController _tabController;
   DateTimeRange? _selectedDateRange;
   final DateFormat _dateFormat = DateFormat('dd.MM.yyyy');
   bool _isFilterVisible = false;
@@ -19,7 +17,6 @@ class _ClientsAndEmployeeScreenState extends State<ClientsAndEmployeeScreen> wit
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     // Default date range - last 30 days
     _selectedDateRange = DateTimeRange(
       start: DateTime.now().subtract(const Duration(days: 30)),
@@ -27,11 +24,6 @@ class _ClientsAndEmployeeScreenState extends State<ClientsAndEmployeeScreen> wit
     );
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
 
   Future<void> _selectDateRange() async {
     final DateTimeRange? picked = await showDateRangePicker(
@@ -64,18 +56,32 @@ class _ClientsAndEmployeeScreenState extends State<ClientsAndEmployeeScreen> wit
 
   @override
   Widget build(BuildContext context) {
+    const Color primaryColor = Color(0xFF7E57C2); // Purple
+    const Color backgroundColor = Color(0xFFF8F9FA); // Light gray background
+    const Color cardColor = Colors.white;
+    const Color textColor = Color(0xFF333333);
+    const Color secondaryTextColor = Color(0xFF757575);
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
       appBar: AppBar(
         backgroundColor: Colors.white,
+        elevation: 0,
         title: const Text(
-          'Management',
+          'Visit',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF333333),
+            fontWeight: FontWeight.w600,
+            color: textColor,
+            fontSize: 18,
           ),
         ),
-        elevation: 0,
+        centerTitle: true,
+        leading: Container(
+          padding: const EdgeInsets.all(12),
+          child: Image.asset(
+            'assets/logo/img.png',
+            color: primaryColor,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.date_range, color: Color(0xFF6A3DE8)),
@@ -91,35 +97,6 @@ class _ClientsAndEmployeeScreenState extends State<ClientsAndEmployeeScreen> wit
           preferredSize: Size.fromHeight(_isFilterVisible ? 120 : 60),
           child: Column(
             children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  tabs: const [
-                    Tab(
-                      text: 'Clients',
-                      icon: Icon(Icons.people),
-                    ),
-                    Tab(
-                      text: 'Employees',
-                      icon: Icon(Icons.badge),
-                    ),
-                  ],
-                  labelColor: const Color(0xFF6A3DE8),
-                  unselectedLabelColor: const Color(0xFF9E9E9E),
-                  indicatorColor: const Color(0xFF6A3DE8),
-                  indicatorWeight: 3,
-                ),
-              ),
               if (_isFilterVisible)
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
@@ -188,13 +165,7 @@ class _ClientsAndEmployeeScreenState extends State<ClientsAndEmployeeScreen> wit
           ),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          ClientsScreen(dateRange: _selectedDateRange),
-          EmployeesScreen(dateRange: _selectedDateRange),
-        ],
-      ),
+      body: ClientsScreen(),
     );
   }
 }

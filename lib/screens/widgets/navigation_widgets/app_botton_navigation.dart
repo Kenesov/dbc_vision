@@ -16,19 +16,19 @@ class AppBottomNavigation extends StatelessWidget {
       items: const <BottomNavigationBarItem>[
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
-          label: 'Statestika',
+          label: 'Statistic',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_today),
-          label: 'Klient va Ishilar Info',
+          icon: Icon(Icons.handshake),
+          label: 'Client',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.qr_code),
-          label: 'Konversiya',
+          icon: Icon(Icons.group),
+          label: 'Employee',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person),
-          label: 'Nostroyka',
+          label: 'Setting',
         ),
       ],
       currentIndex: currentIndex,
@@ -36,6 +36,8 @@ class AppBottomNavigation extends StatelessWidget {
       unselectedItemColor: Colors.grey,
       onTap: onTap,
       type: BottomNavigationBarType.fixed,
+      showSelectedLabels: true, // Show labels for selected item
+      showUnselectedLabels: false, // Hide labels for unselected items
     );
   }
 }

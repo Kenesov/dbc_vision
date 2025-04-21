@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/employee.dart';
-import '../widgets/employee_detail_dialog.dart';
+import 'employee.dart';
+import '../client/widgets/employee_detail_dialog.dart';
 
 class EmployeesScreen extends StatefulWidget {
   final DateTimeRange? dateRange;

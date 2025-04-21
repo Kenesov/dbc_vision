@@ -1,5 +1,5 @@
-import 'package:dbc_vision/screens/client_and_employee_screens/clients_and_employee_screen.dart';
-import 'package:dbc_vision/screens/konversiya/conversiya_screen.dart';
+
+import 'package:dbc_vision/screens/employee/employee_screen.dart';
 import 'package:dbc_vision/screens/my_settings/my_settings_screen.dart';
 import 'package:dbc_vision/screens/widgets/app_bar.dart';
 import 'package:dbc_vision/screens/widgets/cards_widgets/summary2_card.dart';
@@ -14,6 +14,8 @@ import 'package:dbc_vision/screens/widgets/cards_widgets/summary_card.dart';
 import 'package:dbc_vision/screens/widgets/widgets_grafik/weekly_visits_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import 'client/clients_and_employee_screen.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -171,7 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       children: [
                         Expanded(
                           child: Summary2Card(
-                            title: 'Number of Employee',
+                            title: 'Number',
                             value: '450',
                             icon: Icons.person_add,
                             color: Colors.blue, // Moviy rang
@@ -277,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 1: // Mijozlar va Xodimlar Ma'lumotlari
         return const ClientsAndEmployeeScreen();
       case 2: // Konversiya (StatisticsScreen)
-        return const ConversiyaScreen();
+        return const EmployeesScreen();
       case 3: // Mening Sozlamalarim
         return const MySettingsScreen();
       default:
